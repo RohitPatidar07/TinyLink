@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Test</title>
+</head>
+<body>
+  <h1>TinyLink API Test</h1>
+  <button onclick="testAPI()">Test API</button>
+  <pre id="output"></pre>
+  
+  <script>
+    async function testAPI() {
+      const output = document.getElementById('output');
+      output.textContent = 'Testing...\n';
+      
+      try {
+        // Test GET /api/links
+        const res1 = await fetch('http://localhost:4000/api/links');
+        const data1 = await res1.json();
+        output.textContent += `GET /api/links: ${res1.status}\n${JSON.stringify(data1, null, 2)}\n\n`;
+        
+        // Test POST /api/shorten
+        const res2 = await fetch('http://localhost:4000/api/shorten', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: 'https://github.com' })
+        });
+        const data2 = await res2.json();
+        output.textContent += `POST /api/shorten: ${res2.status}\n${JSON.stringify(data2, null, 2)}\n\n`;
+        
+        // Test GET /api/links again
+        const res3 = await fetch('http://localhost:4000/api/links');
+        const data3 = await res3.json();
+        output.textContent += `GET /api/links (after create): ${res3.status}\n${JSON.stringify(data3, null, 2)}\n`;
+      } catch (err) {
+        output.textContent += `Error: ${err.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
