@@ -5,251 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TinyLink - URL Shortener</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        color: #333;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-      
-      .container {
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 40px;
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-      }
-      
-      h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #2c3e50;
-        font-size: 2.5rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-      }
-      
-      h1 i {
-        color: #2575fc;
-      }
-      
-      h2 {
-        margin: 40px 0 20px;
-        color: #2c3e50;
-        font-size: 1.5rem;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #f0f0f0;
-      }
-      
-      #shorten-form {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 30px;
-      }
-      
-      #url-input {
-        flex: 1;
-        padding: 16px 20px;
-        border: 2px solid #e1e8ed;
-        border-radius: 10px;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        background: #f8fafc;
-      }
-      
-      #url-input:focus {
-        outline: none;
-        border-color: #2575fc;
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.1);
-      }
-      
-      #shorten-form button {
-        padding: 16px 24px;
-        border: none;
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-        color: #fff;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      
-      #shorten-form button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(37, 117, 252, 0.4);
-      }
-      
-      #shorten-form button:active {
-        transform: translateY(0);
-      }
-      
-      #result {
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        text-align: center;
-        font-weight: 500;
-        display: none;
-      }
-      
-      #result.success {
-        background: #e8f7ef;
-        color: #2ecc71;
-        border: 1px solid #a3e4bc;
-        display: block;
-      }
-      
-      #result.error {
-        background: #fdecea;
-        color: #e74c3c;
-        border: 1px solid #f5b7b1;
-        display: block;
-      }
-      
-      #links {
-        max-height: 400px;
-        overflow-y: auto;
-        border-radius: 10px;
-        border: 1px solid #e1e8ed;
-      }
-      
-      .link-item {
-        padding: 18px 20px;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        flex-direction: column;
-        transition: background 0.2s ease;
-      }
-      
-      .link-item:hover {
-        background: #f8fafc;
-      }
-      
-      .link-item:last-child {
-        border-bottom: none;
-      }
-      
-      .link-url {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 8px;
-      }
-      
-      .original-url {
-        color: #2c3e50;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        flex: 1;
-      }
-      
-      .short-url {
-        color: #2575fc;
-        font-weight: 600;
-        text-decoration: none;
-        transition: color 0.2s ease;
-      }
-      
-      .short-url:hover {
-        color: #6a11cb;
-        text-decoration: underline;
-      }
-      
-      .meta {
-        font-size: 13px;
-        color: #7f8c8d;
-        display: flex;
-        gap: 15px;
-      }
-      
-      .copy-btn {
-        background: #f0f0f0;
-        border: none;
-        border-radius: 6px;
-        padding: 6px 12px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      
-      .copy-btn:hover {
-        background: #e0e0e0;
-      }
-      
-      .copy-btn.copied {
-        background: #2ecc71;
-        color: white;
-      }
-      
-      .empty-state {
-        text-align: center;
-        padding: 40px 20px;
-        color: #7f8c8d;
-      }
-      
-      .empty-state i {
-        font-size: 48px;
-        margin-bottom: 15px;
-        color: #bdc3c7;
-      }
-      
-      @media (max-width: 600px) {
-        .container {
-          padding: 30px 20px;
-        }
-        
-        h1 {
-          font-size: 2rem;
-        }
-        
-        #shorten-form {
-          flex-direction: column;
-        }
-        
-        .meta {
-          flex-direction: column;
-          gap: 5px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <div class="container">
@@ -264,22 +20,24 @@
       <div id="links">
         <div class="empty-state">
           <i class="fas fa-inbox"></i>
-          <p>No shortened links yet. Create your first one above!</p>
+          <p>Loading links...</p>
         </div>
       </div>
     </div>
 
     <script>
+      const API_BASE = 'http://localhost:4000';
+      
       document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('shorten-form');
         const urlInput = document.getElementById('url-input');
         const resultDiv = document.getElementById('result');
         const linksContainer = document.getElementById('links');
         
-        // Load links from localStorage
+        // Load links from backend
         loadLinks();
         
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
           e.preventDefault();
           
           const url = urlInput.value.trim();
@@ -301,117 +59,110 @@
             return;
           }
           
-          // Simulate API call to shorten URL
-          shortenUrl(validUrl);
+          // Call backend API to shorten URL
+          await shortenUrl(validUrl);
         });
         
-        function shortenUrl(url) {
-          // In a real app, this would be an API call to your backend
-          // For demo purposes, we'll simulate the response
-          
-          showResult('Shortening URL...', 'info');
-          
-          setTimeout(() => {
-            const shortCode = generateShortCode();
-            const shortUrl = `https://tinylink.me/${shortCode}`;
+        async function shortenUrl(url) {
+          try {
+            showResult('Shortening URL...', 'info');
             
-            // Save to localStorage
-            saveLink(url, shortUrl, shortCode);
+            const response = await fetch(`${API_BASE}/api/shorten`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ url })
+            });
             
-            // Show success message
-            showResult(`URL shortened successfully! <a href="${shortUrl}" target="_blank">${shortUrl}</a>`, 'success');
+            if (!response.ok) {
+              throw new Error('Failed to shorten URL');
+            }
+            
+            const data = await response.json();
+            
+            // Show success message with actual short link
+            showResult(`
+              URL shortened successfully!<br>
+              <a href="http://localhost:4000/${data.code}" target="_blank" class="short-link-display">
+                http://localhost:4000/${data.code}
+              </a>
+              <button class="copy-btn-inline" onclick="copyToClipboard('http://localhost:4000/${data.code}')">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            `, 'success');
             
             // Clear input
             urlInput.value = '';
             
             // Reload links
-            loadLinks();
-          }, 800);
-        }
-        
-        function generateShortCode() {
-          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          let result = '';
-          for (let i = 0; i < 6; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
+            await loadLinks();
+          } catch (err) {
+            console.error('Error:', err);
+            showResult('Error shortening URL. Make sure backend is running on http://localhost:4000', 'error');
           }
-          return result;
         }
         
-        function saveLink(originalUrl, shortUrl, shortCode) {
-          const links = JSON.parse(localStorage.getItem('tinylinks') || '[]');
-          
-          const newLink = {
-            id: Date.now(),
-            originalUrl,
-            shortUrl,
-            shortCode,
-            createdAt: new Date().toISOString(),
-            clicks: 0
-          };
-          
-          links.unshift(newLink);
-          localStorage.setItem('tinylinks', JSON.stringify(links));
-        }
-        
-        function loadLinks() {
-          const links = JSON.parse(localStorage.getItem('tinylinks') || '[]');
-          
-          if (links.length === 0) {
-            linksContainer.innerHTML = `
-              <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <p>No shortened links yet. Create your first one above!</p>
-              </div>
-            `;
-            return;
-          }
-          
-          linksContainer.innerHTML = '';
-          
-          links.forEach(link => {
-            const linkElement = document.createElement('div');
-            linkElement.className = 'link-item';
+        async function loadLinks() {
+          try {
+            const response = await fetch(`${API_BASE}/api/links`);
             
-            const date = new Date(link.createdAt);
-            const formattedDate = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            if (!response.ok) {
+              throw new Error('Failed to load links');
+            }
             
-            linkElement.innerHTML = `
-              <div class="link-url">
-                <span class="original-url">${link.originalUrl}</span>
-              </div>
-              <div class="link-url">
-                <a href="${link.shortUrl}" target="_blank" class="short-url">${link.shortUrl}</a>
-                <button class="copy-btn" data-url="${link.shortUrl}">
-                  <i class="fas fa-copy"></i> Copy
-                </button>
-              </div>
-              <div class="meta">
-                <span><i class="far fa-calendar"></i> ${formattedDate}</span>
-                <span><i class="far fa-eye"></i> ${link.clicks} clicks</span>
-              </div>
-            `;
+            const links = await response.json();
             
-            linksContainer.appendChild(linkElement);
-          });
-          
-          // Add copy functionality
-          document.querySelectorAll('.copy-btn').forEach(button => {
-            button.addEventListener('click', function() {
-              const url = this.getAttribute('data-url');
-              copyToClipboard(url);
+            if (!Array.isArray(links) || links.length === 0) {
+              linksContainer.innerHTML = `
+                <div class="empty-state">
+                  <i class="fas fa-inbox"></i>
+                  <p>No shortened links yet. Create your first one above!</p>
+                </div>
+              `;
+              return;
+            }
+            
+            linksContainer.innerHTML = '';
+            
+            links.forEach(link => {
+              const linkElement = document.createElement('div');
+              linkElement.className = 'link-item';
               
-              // Visual feedback
-              const originalText = this.innerHTML;
-              this.innerHTML = '<i class="fas fa-check"></i> Copied!';
-              this.classList.add('copied');
+              const date = new Date(link.createdAt);
+              const formattedDate = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
               
-              setTimeout(() => {
-                this.innerHTML = originalText;
-                this.classList.remove('copied');
-              }, 2000);
+              const lastVisitText = link.lastVisited 
+                ? new Date(link.lastVisited).toLocaleDateString() + ' at ' + new Date(link.lastVisited).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                : 'Never';
+              
+              linkElement.innerHTML = `
+                <div class="link-url">
+                  <span class="original-url">${link.url}</span>
+                </div>
+                <div class="link-url">
+                  <a href="http://localhost:4000/${link.code}" target="_blank" class="short-url">http://localhost:4000/${link.code}</a>
+                  <button class="copy-btn" onclick="copyToClipboard('http://localhost:4000/${link.code}')">
+                    <i class="fas fa-copy"></i> Copy
+                  </button>
+                </div>
+                <div class="meta">
+                  <span><i class="far fa-calendar"></i> Created: ${formattedDate}</span>
+                  <span><i class="far fa-eye"></i> Clicks: ${link.visits}</span>
+                </div>
+              `;
+              
+              linksContainer.appendChild(linkElement);
             });
-          });
+          } catch (err) {
+            console.error('Error loading links:', err);
+            linksContainer.innerHTML = `
+              <div class="empty-state error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Cannot connect to backend. Make sure it's running on http://localhost:4000</p>
+              </div>
+            `;
+          }
         }
         
         function showResult(message, type) {
@@ -426,16 +177,19 @@
             }, 5000);
           }
         }
-        
-        function copyToClipboard(text) {
-          const textarea = document.createElement('textarea');
-          textarea.value = text;
-          document.body.appendChild(textarea);
-          textarea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textarea);
-        }
       });
+      
+      function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        // Show feedback
+        alert('Link copied to clipboard!');
+      }
     </script>
   </body>
 </html>

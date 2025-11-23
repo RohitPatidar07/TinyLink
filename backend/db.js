@@ -1,15 +1,55 @@
 require('dotenv').config();
-const mysql = require('mysql2/promise');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 let pool = null;
+let usePostgres = false;
 let useMySQL = false;
 let usingSQLite = false;
 let sqliteDb = null;
 
+// PostgreSQL initialization
+const tryInitPostgres = async () => {
+  try {
+    const { Pool } = require('pg');
+    const testPool = new Pool({
+      host: process.env.PG_HOST,
+      port: process.env.PG_PORT || 5432,
+      user: process.env.PG_USER,
+      password: process.env.PG_PASSWORD,
+      database: process.env.PG_DATABASE
+    });
+
+    // Test connection
+    const client = await testPool.connect();
+    client.release();
+    pool = testPool;
+    usePostgres = true;
+    console.log('✓ PostgreSQL connection successful');
+    
+    // Create table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS links (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(128) UNIQUE NOT NULL,
+        url TEXT NOT NULL,
+        visits INTEGER DEFAULT 0,
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "lastVisited" TIMESTAMP NULL
+      )
+    `);
+    console.log('✓ PostgreSQL table verified');
+  } catch (err) {
+    console.warn('⚠ PostgreSQL connection failed:', err.message);
+    console.log('  Falling back to MySQL...');
+    usePostgres = false;
+  }
+};
+
+// MySQL initialization
 const tryInitMySQL = async () => {
   try {
+    const mysql = require('mysql2/promise');
     const testPool = mysql.createPool({
       host: process.env.MYSQL_HOST || '127.0.0.1',
       port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT, 10) : 3306,
@@ -66,19 +106,32 @@ const initSQLite = () => {
   console.log('✓ Using SQLite (db.sqlite)');
 };
 
-// Initialize DB
+// Initialize DB - tries PostgreSQL → MySQL → SQLite
 const init = async () => {
-  if (process.env.DB_TYPE && process.env.DB_TYPE.toLowerCase() === 'mysql') {
+  const dbType = (process.env.DB_TYPE || 'sqlite').toLowerCase();
+  
+  if (dbType === 'postgres' || dbType === 'postgresql') {
+    await tryInitPostgres();
+  }
+  
+  if (!usePostgres && dbType === 'mysql') {
     await tryInitMySQL();
   }
-  if (!useMySQL) {
+  
+  if (!usePostgres && !useMySQL) {
     initSQLite();
   }
 };
 
 // Create new short link
 const createLink = async (code, url) => {
-  if (useMySQL) {
+  if (usePostgres) {
+    const result = await pool.query(
+      'INSERT INTO links (code, url) VALUES ($1, $2) RETURNING id, code, url',
+      [code, url]
+    );
+    return { id: result.rows[0].id, code, url };
+  } else if (useMySQL) {
     const [result] = await pool.query(
       'INSERT INTO links (code, url) VALUES (?, ?)',
       [code, url]
@@ -98,7 +151,13 @@ const createLink = async (code, url) => {
 
 // Find link by code
 const findByCode = async (code) => {
-  if (useMySQL) {
+  if (usePostgres) {
+    const result = await pool.query(
+      'SELECT * FROM links WHERE code = $1 LIMIT 1',
+      [code]
+    );
+    return result.rows[0] || null;
+  } else if (useMySQL) {
     const [rows] = await pool.query(
       'SELECT * FROM links WHERE code = ? LIMIT 1',
       [code]
@@ -116,7 +175,12 @@ const findByCode = async (code) => {
 
 // Increment clicks
 const incrementVisits = async (code) => {
-  if (useMySQL) {
+  if (usePostgres) {
+    await pool.query(
+      'UPDATE links SET visits = visits + 1, "lastVisited" = CURRENT_TIMESTAMP WHERE code = $1',
+      [code]
+    );
+  } else if (useMySQL) {
     await pool.query(
       'UPDATE links SET visits = visits + 1, lastVisited = CURRENT_TIMESTAMP WHERE code = ?',
       [code]
@@ -137,7 +201,12 @@ const incrementVisits = async (code) => {
 
 // List all links
 const listLinks = async () => {
-  if (useMySQL) {
+  if (usePostgres) {
+    const result = await pool.query(
+      'SELECT id, code, url, visits, "createdAt", "lastVisited" FROM links ORDER BY id DESC'
+    );
+    return result.rows;
+  } else if (useMySQL) {
     const [rows] = await pool.query(
       'SELECT id, code, url, visits, createdAt, lastVisited FROM links ORDER BY id DESC'
     );
@@ -157,7 +226,13 @@ const listLinks = async () => {
 
 // Delete link
 const deleteLink = async (code) => {
-  if (useMySQL) {
+  if (usePostgres) {
+    const result = await pool.query(
+      'DELETE FROM links WHERE code = $1',
+      [code]
+    );
+    return result.rowCount > 0;
+  } else if (useMySQL) {
     const [res] = await pool.query(
       'DELETE FROM links WHERE code = ?',
       [code]
